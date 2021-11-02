@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
-const WORK = 50;
-const BREAK = 10;
+const WORK = 2;
+const BREAK = 1;
 
 function Display(props) {
   let min = (props.minutes < 10) ? "0" + props.minutes.toString(): props.minutes.toString();
@@ -29,40 +29,67 @@ function App() {
   const [running, updateRun] = useState(false);
   const [timeRemaining, updateTime] = useState(WORK * 60);
   const [startTime, updateStart] = useState(0);
+  const pauseTimeRef = useRef();
+  const intervalRef = useRef();
+  const pauseRef = useRef(0);
 
 useEffect(() => {
+      let intervalId;
+
       if (running) {
-        
-      setInterval(() => {
-        
+      intervalId = setInterval(() => {
         let now = Date.now();
-        let elapsed = Math.floor((now - startTime) / 1000)
-        updateTime(3000 - elapsed);
-        let minutes = Math.floor(timeRemaining/60);
-        let seconds = timeRemaining % 60;
-        console.log(seconds);
+        let remaining = Math.floor(WORK*60 - ((now - startTime) / 1000) + pauseRef.current);
+        updateTime(remaining);
+        let minutes = Math.floor(remaining/60);
+        let seconds = remaining % 60;
+
+        //if time up
+        if (minutes == 0 && seconds == 0) {
+          if (mode == "Work") {
+            updateMode("Break");
+            handleReset(BREAK, false);
+          } else {
+            updateMode("Work");
+            handleReset(WORK, false);
+          }
+
+        } else {
         updateMin(minutes);
         updateSec(seconds);
-       
+        }
       }, 500)
       }
-  
+      intervalRef.current = intervalId;
+  return () => {
+    clearInterval(intervalId);
+  }
 }, [running])
 
   const handleStart = () => {
     updateRun(true);
     if (timeRemaining == WORK * 60) {
       updateStart(Date.now())
+    } else {
+      pauseRef.current = pauseRef.current + (Date.now() - pauseTimeRef.current)/1000;
     }
+
   }
-  //WHEN I STOP, I NEED TO NOT RESTART. KEEP TRACK OF WHEN YOU STOPPED OR HOW LONG IT HAD BEEN
+ 
   const handleStop = () => {
     updateRun(false);
+    pauseTimeRef.current = Date.now();
   }
 
-  const handleReset = () => {
-    updateMin(50);
+  const handleReset = (minutes, buttonTrig) => {
+    if (buttonTrig) {
+    updateRun(false);
+    }
+    updateMin(minutes);
     updateSec(0);
+    updateTime(60 * minutes);
+    pauseRef.current = 0;
+    clearInterval(intervalRef.current);
   }
   
   
@@ -78,7 +105,7 @@ useEffect(() => {
         <button onClick = {handleStop}>
           Stop
         </button>
-        <button onClick={handleReset}>
+        <button onClick={() => handleReset(true)}>
           Reset
         </button>
     </div>
