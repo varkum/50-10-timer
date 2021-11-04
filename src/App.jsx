@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
-const WORK = 2;
+const WORK = 1;
 const BREAK = 1;
 
 function Display(props) {
@@ -32,26 +32,34 @@ function App() {
   const pauseTimeRef = useRef();
   const intervalRef = useRef();
   const pauseRef = useRef(0);
+  const totalTimeRef = useRef(WORK * 60);
 
 useEffect(() => {
       let intervalId;
-
+      //SLIGHT ACCELERATION OF CLOCK IN BEGINNING
       if (running) {
       intervalId = setInterval(() => {
         let now = Date.now();
-        let remaining = Math.floor(WORK*60 - ((now - startTime) / 1000) + pauseRef.current);
+        let remaining = Math.floor(totalTimeRef.current - ((now - startTime) / 1000) + pauseRef.current);
         updateTime(remaining);
         let minutes = Math.floor(remaining/60);
         let seconds = remaining % 60;
 
+        intervalRef.current = intervalId;
         //if time up
         if (minutes == 0 && seconds == 0) {
           if (mode == "Work") {
-            updateMode("Break");
+            
+            totalTimeRef.current = BREAK * 60;
             handleReset(BREAK, false);
+            updateMode("Break");
+            
+            
           } else {
-            updateMode("Work");
+            
+            totalTimeRef.current = WORK * 60;
             handleReset(WORK, false);
+            updateMode("Work");
           }
 
         } else {
@@ -60,11 +68,11 @@ useEffect(() => {
         }
       }, 500)
       }
-      intervalRef.current = intervalId;
+      
   return () => {
     clearInterval(intervalId);
   }
-}, [running])
+}, [running, mode])
 
   const handleStart = () => {
     updateRun(true);
@@ -85,11 +93,12 @@ useEffect(() => {
     if (buttonTrig) {
     updateRun(false);
     }
+    updateStart(Date.now());
     updateMin(minutes);
     updateSec(0);
     updateTime(60 * minutes);
     pauseRef.current = 0;
-    clearInterval(intervalRef.current);
+    //clearInterval(intervalRef.current);
   }
   
   
@@ -105,7 +114,7 @@ useEffect(() => {
         <button onClick = {handleStop}>
           Stop
         </button>
-        <button onClick={() => handleReset(true)}>
+        <button onClick={() => handleReset(WORK, true)}>
           Reset
         </button>
     </div>
