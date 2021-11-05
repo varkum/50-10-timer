@@ -3,6 +3,7 @@ import './App.css';
 const WORK = 1;
 const BREAK = 1;
 
+
 function Display(props) {
   let min = (props.minutes < 10) ? "0" + props.minutes.toString(): props.minutes.toString();
   let sec = (props.seconds < 10) ? "0" + props.seconds.toString(): props.seconds.toString();
@@ -22,6 +23,30 @@ function Display(props) {
   
 }
 
+//audio hook
+//CHANGE THIS TO A USEALERT HOOK AND MAKE SURE THE ALERT DOESNT RUN EVERY TIME COMPONENT RERENDERS
+// ALSO MAKE SURE TIMER WAITS TILL ALERT IS DONE
+const useAudio = (url) => {
+  const [audio, changeAudio] = useState(new Audio(url));
+  const [playing, setPlaying] = useState(false);
+
+  const toggle = () => setPlaying(!playing);
+
+  useEffect(() => {
+    playing ? audio.play(): audio.pause()
+    window.alert("done!");
+  }, [playing]);
+
+  useEffect(() => {
+    audio.addEventListener("ended", () => setPlaying(false));
+    return () => {
+      audio.removeEventListener("ended", () => setPlaying(false))
+    }
+  }, [])
+
+  return [playing, toggle]
+}
+
 function App() {
   const [min, updateMin] = useState(WORK);
   const [sec, updateSec] = useState(0);
@@ -34,13 +59,14 @@ function App() {
   const pauseRef = useRef(0);
   const totalTimeRef = useRef(WORK * 60);
 
-useEffect(() => {
+  const [playing, toggle] = useAudio("https://actions.google.com/sounds/v1/cartoon/cartoon_cowbell.ogg");
+  
+  useEffect(() => {
       let intervalId;
-      //SLIGHT ACCELERATION OF CLOCK IN BEGINNING
       if (running) {
       intervalId = setInterval(() => {
         let now = Date.now();
-        let remaining = Math.floor(totalTimeRef.current - ((now - startTime) / 1000) + pauseRef.current);
+        let remaining = Math.ceil(totalTimeRef.current - ((now - startTime) / 1000) + pauseRef.current);
         updateTime(remaining);
         let minutes = Math.floor(remaining/60);
         let seconds = remaining % 60;
@@ -49,17 +75,21 @@ useEffect(() => {
         //if time up
         if (minutes == 0 && seconds == 0) {
           if (mode == "Work") {
-            
+            toggle();
+            //window.alert("Break time");
             totalTimeRef.current = BREAK * 60;
             handleReset(BREAK, false);
             updateMode("Break");
             
             
           } else {
-            
+            toggle();
+
+            //window.alert("Back to work");
             totalTimeRef.current = WORK * 60;
             handleReset(WORK, false);
             updateMode("Work");
+            
           }
 
         } else {
@@ -73,6 +103,8 @@ useEffect(() => {
     clearInterval(intervalId);
   }
 }, [running, mode])
+
+
 
   const handleStart = () => {
     updateRun(true);
@@ -98,7 +130,8 @@ useEffect(() => {
     updateSec(0);
     updateTime(60 * minutes);
     pauseRef.current = 0;
-    //clearInterval(intervalRef.current);
+    updateMode("Work");
+    clearInterval(intervalRef.current);
   }
   
   
