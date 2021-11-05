@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
-const WORK = 1;
-const BREAK = 1;
+const WORK = 1; //work time
+const BREAK = 1; //break time
 
-
+//display component
 function Display(props) {
   let min = (props.minutes < 10) ? "0" + props.minutes.toString(): props.minutes.toString();
   let sec = (props.seconds < 10) ? "0" + props.seconds.toString(): props.seconds.toString();
@@ -19,13 +19,9 @@ function Display(props) {
      
     </div>
   )
-  
-  
 }
 
-//audio hook
-//CHANGE THIS TO A USEALERT HOOK AND MAKE SURE THE ALERT DOESNT RUN EVERY TIME COMPONENT RERENDERS
-// ALSO MAKE SURE TIMER WAITS TILL ALERT IS DONE
+//alert hook
 const useAlert = (url) => {
   const [audio, changeAudio] = useState(new Audio(url));
 
@@ -33,8 +29,6 @@ const useAlert = (url) => {
     audio.play();
     window.alert(mode + " is done!");
   }
-
-  
 
   return [toggle]
 }
@@ -44,11 +38,10 @@ function App() {
   const [sec, updateSec] = useState(0);
   const [mode, updateMode] = useState('Work');
   const [running, updateRun] = useState(false);
-  const [timeRemaining, updateTime] = useState(WORK * 60);
   const [startTime, updateStart] = useState(0);
-  const pauseTimeRef = useRef();
+  const pauseTimeRef = useRef();  //current pause location (time)
   const intervalRef = useRef();
-  const pauseRef = useRef(0);
+  const pauseRef = useRef(0); //total pauseTime
   const totalTimeRef = useRef(WORK * 60);
 
   const [toggle] = useAlert("https://actions.google.com/sounds/v1/cartoon/cartoon_cowbell.ogg");
@@ -59,7 +52,6 @@ function App() {
       intervalId = setInterval(() => {
         let now = Date.now();
         let remaining = Math.ceil(totalTimeRef.current - ((now - startTime) / 1000) + pauseRef.current);
-        updateTime(remaining);
         let minutes = Math.floor(remaining/60);
         let seconds = remaining % 60;
 
@@ -68,20 +60,14 @@ function App() {
         if (minutes == 0 && seconds == 0) {
           if (mode == "Work") {
             toggle("Work");
-            //window.alert("Break time");
             totalTimeRef.current = BREAK * 60;
             handleReset(BREAK, false);
             updateMode("Break");
-            
-            
           } else {
             toggle("Break");
-
-            //window.alert("Back to work");
             totalTimeRef.current = WORK * 60;
             handleReset(WORK, false);
             updateMode("Work");
-            
           }
 
         } else {
@@ -100,12 +86,11 @@ function App() {
 
   const handleStart = () => {
     updateRun(true);
-    if (timeRemaining == WORK * 60) {
+    if (min == totalTimeRef.current/60 && sec == 0) {
       updateStart(Date.now())
     } else {
       pauseRef.current = pauseRef.current + (Date.now() - pauseTimeRef.current)/1000;
     }
-
   }
  
   const handleStop = () => {
@@ -120,15 +105,12 @@ function App() {
     updateStart(Date.now());
     updateMin(minutes);
     updateSec(0);
-    updateTime(60 * minutes);
+    totalTimeRef.current = WORK * 60;
     pauseRef.current = 0;
     updateMode("Work");
     clearInterval(intervalRef.current);
   }
   
-  
- 
-
   return (
     <div>
       <Display minutes={min} seconds={sec} mode={mode} />
