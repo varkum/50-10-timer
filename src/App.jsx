@@ -26,25 +26,17 @@ function Display(props) {
 //audio hook
 //CHANGE THIS TO A USEALERT HOOK AND MAKE SURE THE ALERT DOESNT RUN EVERY TIME COMPONENT RERENDERS
 // ALSO MAKE SURE TIMER WAITS TILL ALERT IS DONE
-const useAudio = (url) => {
+const useAlert = (url) => {
   const [audio, changeAudio] = useState(new Audio(url));
-  const [playing, setPlaying] = useState(false);
 
-  const toggle = () => setPlaying(!playing);
+  const toggle = (mode) => {
+    audio.play();
+    window.alert(mode + " is done!");
+  }
 
-  useEffect(() => {
-    playing ? audio.play(): audio.pause()
-    window.alert("done!");
-  }, [playing]);
+  
 
-  useEffect(() => {
-    audio.addEventListener("ended", () => setPlaying(false));
-    return () => {
-      audio.removeEventListener("ended", () => setPlaying(false))
-    }
-  }, [])
-
-  return [playing, toggle]
+  return [toggle]
 }
 
 function App() {
@@ -59,7 +51,7 @@ function App() {
   const pauseRef = useRef(0);
   const totalTimeRef = useRef(WORK * 60);
 
-  const [playing, toggle] = useAudio("https://actions.google.com/sounds/v1/cartoon/cartoon_cowbell.ogg");
+  const [toggle] = useAlert("https://actions.google.com/sounds/v1/cartoon/cartoon_cowbell.ogg");
   
   useEffect(() => {
       let intervalId;
@@ -75,7 +67,7 @@ function App() {
         //if time up
         if (minutes == 0 && seconds == 0) {
           if (mode == "Work") {
-            toggle();
+            toggle("Work");
             //window.alert("Break time");
             totalTimeRef.current = BREAK * 60;
             handleReset(BREAK, false);
@@ -83,7 +75,7 @@ function App() {
             
             
           } else {
-            toggle();
+            toggle("Break");
 
             //window.alert("Back to work");
             totalTimeRef.current = WORK * 60;
