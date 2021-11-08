@@ -9,7 +9,7 @@ function Display(props) {
   let sec = (props.seconds < 10) ? "0" + props.seconds.toString(): props.seconds.toString();
  
   return (
-    <div>
+    <div className = "display-container">
        <h3>
         {props.mode}
       </h3>
@@ -26,6 +26,7 @@ const useAlert = (url) => {
   const [audio, changeAudio] = useState(new Audio(url));
 
   const toggle = (mode) => {
+    audio.volume = 1;
     audio.play();
     window.alert(mode + " is done!");
   }
@@ -112,7 +113,8 @@ function App() {
   }
   
   return (
-    <div>
+    <div className="page-container">
+    <div className="timer-container">
       <Display minutes={min} seconds={sec} mode={mode} />
       <div>
         <button onClick = {handleStart}>
@@ -124,6 +126,7 @@ function App() {
         <button onClick={() => handleReset(WORK, true)}>
           Reset
         </button>
+    </div>
     </div>
     </div>
   );
