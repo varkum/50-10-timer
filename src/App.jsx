@@ -26,7 +26,6 @@ const useAlert = (url) => {
   const [audio, changeAudio] = useState(new Audio(url));
 
   const toggle = (mode) => {
-    audio.volume = 1;
     audio.play();
     window.alert(mode + " is done!");
   }
