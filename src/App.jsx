@@ -8,12 +8,28 @@ function Display(props) {
   let min = (props.minutes < 10) ? "0" + props.minutes.toString(): props.minutes.toString();
   let sec = (props.seconds < 10) ? "0" + props.seconds.toString(): props.seconds.toString();
  
+ const switchMode = () => {
+   if (props.mode == "Work") {
+     props.updateMode("Break");
+   } else {
+     props.updateMode("Work")
+   }
+ }
+
+ const handleTimeClick = () => {
+   //HAVE A BOOLEAN THAT WHEN CLICKED BECOMES TRUE AND HAVES THE TIME TURN INTO TEXTAREA
+ }
   return (
     <div className = "display-container">
-       <h3>
-        {props.mode}
-      </h3>
-      <h1>
+      <div className="mode-container">
+        <h3>
+          {props.mode}
+        </h3>
+        <button className="switch-button" onClick={switchMode}>
+         <i class="fas fa-sync-alt"></i>
+        </button>
+      </div>
+      <h1 onClick={()=> window.alert("Clicked")}>
         {min}:{sec}
       </h1>
      
@@ -85,12 +101,15 @@ function App() {
 
 
   const handleStart = () => {
-    updateRun(true);
+    if (!running) {
     if (min == totalTimeRef.current/60 && sec == 0) {
       updateStart(Date.now())
     } else {
       pauseRef.current = pauseRef.current + (Date.now() - pauseTimeRef.current)/1000;
     }
+    }
+
+    updateRun(true);
   }
  
   const handleStop = () => {
@@ -111,18 +130,20 @@ function App() {
     clearInterval(intervalRef.current);
   }
   
+  
+
   return (
     <div className="page-container">
     <div className="timer-container">
-      <Display minutes={min} seconds={sec} mode={mode} />
+      <Display minutes={min} seconds={sec} mode={mode} updateMode= {(mode) => updateMode(mode)}/>
       <div>
-        <button onClick = {handleStart}>
+        <button className="btn" onClick = {handleStart}>
           Start
         </button>
-        <button onClick = {handleStop}>
+        <button className="btn" onClick = {handleStop}>
           Stop
         </button>
-        <button onClick={() => handleReset(WORK, true)}>
+        <button className="btn" onClick={() => handleReset(WORK, true)}>
           Reset
         </button>
     </div>
