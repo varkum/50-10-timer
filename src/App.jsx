@@ -1,12 +1,36 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
-const WORK = 1; //work time
-const BREAK = 1; //break time
+let WORK = 1; //work time
+let BREAK = 1; //break time
+
+//detect click outside hook
+
+const useDetectClick = (ref, changeEdit) => {
+  useEffect(() => {
+    const handleClick = (event) => {
+      if (ref.current && !ref.current.contains(event.target.value)) {
+        changeEdit(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClick);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClick)
+    }
+  })
+}
+
 
 //display component
 function Display(props) {
-  let min = (props.minutes < 10) ? "0" + props.minutes.toString(): props.minutes.toString();
+   let min = (props.minutes < 10) ? "0" + props.minutes.toString(): props.minutes.toString();
   let sec = (props.seconds < 10) ? "0" + props.seconds.toString(): props.seconds.toString();
+  
+  const wrapperRef = useRef(null);
+  
+  const [edit, changeEdit] = useState(false);
+  useDetectClick(wrapperRef, changeEdit);
  
  const switchMode = () => {
    if (props.mode == "Work") {
@@ -16,22 +40,47 @@ function Display(props) {
    }
  }
 
- const handleTimeClick = () => {
-   //HAVE A BOOLEAN THAT WHEN CLICKED BECOMES TRUE AND HAVES THE TIME TURN INTO TEXTAREA
- }
+const editTimes = () => {
+  if(!props.running) {
+  changeEdit(!edit)
+  }
+}
+
+const handleWorkInput = (event) => {
+  console.log(event.target.value);
+  props.updateWork(event.target.value);
+}
+
+const handleBreakInput = (event) => {
+  props.updateBreak(event.target.value);
+}
+
+const breakEdit = <p>Break:  <input onChange={handleBreakInput} type='number' min="1" placeholder={props.breakTime} /></p>;
+const workEdit = <p>Work:  <input onInput={handleWorkInput} type='number' min = "1" placeholder={props.breakTime} /></p>;
   return (
-    <div className = "display-container">
+    <div ref={wrapperRef} className = "display-container">
       <div className="mode-container">
         <h3>
           {props.mode}
         </h3>
         <button className="switch-button" onClick={switchMode}>
-         <i class="fas fa-sync-alt"></i>
+         <i className="fas fa-sync-alt"></i>
         </button>
       </div>
-      <h1 onClick={()=> window.alert("Clicked")}>
-        {min}:{sec}
-      </h1>
+      
+      <div className="disp">
+        <h1>{min}:{sec}</h1>
+        <button className="switch-button" onClick={editTimes}>
+          <i className="fas fa-cog"></i>
+        </button>
+        <div className="settings">
+        {edit && workEdit}
+        {edit && breakEdit}
+        </div>
+      </div>
+        
+      
+      
      
     </div>
   )
@@ -50,7 +99,10 @@ const useAlert = (url) => {
 }
 
 function App() {
-  const [min, updateMin] = useState(WORK);
+  const [breakTime, updateBreak] = useState(1);
+  const [workTime, updateWork] = useState(1);
+  
+  const [min, updateMin] = useState(workTime);
   const [sec, updateSec] = useState(0);
   const [mode, updateMode] = useState('Work');
   const [running, updateRun] = useState(false);
@@ -58,9 +110,10 @@ function App() {
   const pauseTimeRef = useRef();  //current pause location (time)
   const intervalRef = useRef();
   const pauseRef = useRef(0); //total pauseTime
-  const totalTimeRef = useRef(WORK * 60);
+  const totalTimeRef = useRef(workTime * 60);
 
   const [toggle] = useAlert("https://actions.google.com/sounds/v1/cartoon/cartoon_cowbell.ogg");
+  
   
   useEffect(() => {
       let intervalId;
@@ -76,13 +129,13 @@ function App() {
         if (minutes == 0 && seconds == 0) {
           if (mode == "Work") {
             toggle("Work");
-            totalTimeRef.current = BREAK * 60;
-            handleReset(BREAK, false);
+            totalTimeRef.current = breakTime * 60;
+            handleReset(breakTime, false);
             updateMode("Break");
           } else {
             toggle("Break");
-            totalTimeRef.current = WORK * 60;
-            handleReset(WORK, false);
+            totalTimeRef.current = workTime * 60;
+            handleReset(workTime, false);
             updateMode("Work");
           }
 
@@ -124,7 +177,7 @@ function App() {
     updateStart(Date.now());
     updateMin(minutes);
     updateSec(0);
-    totalTimeRef.current = WORK * 60;
+    totalTimeRef.current = workTime * 60;
     pauseRef.current = 0;
     updateMode("Work");
     clearInterval(intervalRef.current);
@@ -135,7 +188,7 @@ function App() {
   return (
     <div className="page-container">
     <div className="timer-container">
-      <Display minutes={min} seconds={sec} mode={mode} updateMode= {(mode) => updateMode(mode)}/>
+      <Display minutes={min} seconds={sec} mode={mode} updateMode= {(mode) => updateMode(mode)} updateMin={(min) => updateMin(min)} updateSec={(sec) => updateSec(sec)} running={running} workTime={workTime} breakTime={breakTime} updateWork={(t)=>updateWork(t)} updateBreak={(t)=>updateBreak(t)}/>
       <div>
         <button className="btn" onClick = {handleStart}>
           Start
@@ -143,7 +196,7 @@ function App() {
         <button className="btn" onClick = {handleStop}>
           Stop
         </button>
-        <button className="btn" onClick={() => handleReset(WORK, true)}>
+        <button className="btn" onClick={() => handleReset(workTime, true)}>
           Reset
         </button>
     </div>
